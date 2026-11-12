@@ -4,6 +4,8 @@
 
 Alex Lopez, with Claude (Anthropic). Draft of 12 November 2026.
 
+**PDF version:** [erdos-195-197.pdf](erdos-195-197.pdf), typeset from [erdos-195-197.tex](erdos-195-197.tex) (`tectonic erdos-195-197.tex` rebuilds it). The PDF and this page have the same text.
+
 > **Read this first.** Both problems are open and this paper solves neither. It collects what one project proved, checked by computer, or ruled out, and it says for every statement which of the three it is. The main theorems are verified in the Lean 4 proof assistant, in eight public repositories (table in §7). **No part of this work has been reviewed by a human mathematician.**
 
 ## Abstract

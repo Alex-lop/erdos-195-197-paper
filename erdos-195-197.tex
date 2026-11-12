@@ -1,0 +1,733 @@
+% Typeset version of README.md. Build: tectonic erdos-195-197.tex  (or pdflatex twice)
+\documentclass[11pt,letterpaper]{article}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{enumitem}
+\usepackage{booktabs,longtable,array}
+\usepackage{xcolor}
+\PassOptionsToPackage{hyphens}{url}
+\usepackage[colorlinks=true,linkcolor=blue!45!black,urlcolor=blue!45!black]{hyperref}
+
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\bef}{\prec}
+\newcommand{\nut}{\nu_2}
+\newcommand{\SW}{\mathrm{SW}}
+\newcommand{\fr}{\operatorname{frac}}
+% status tag
+\newcommand{\st}[1]{\textnormal{\textsf{\small[#1]}}}
+\newcommand{\repo}[1]{\href{https://github.com/Alex-lop/#1}{\nolinkurl{#1}}}
+% a named statement with its status: \begin{result}{Theorem H}{Lean} ... \end{result}
+\newenvironment{result}[2]%
+  {\par\medskip\noindent\textbf{#1}\ \st{#2}\textbf{.}\enspace\itshape}%
+  {\par\medskip}
+\newcommand{\idea}[1]{\par\smallskip\noindent\textit{#1.}\enspace}
+\setlist{itemsep=2pt,topsep=4pt}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\title{Monotone arithmetic progressions in lists of the integers\\[6pt]
+\large Partial results on Erd\H{o}s problems \#195 and \#197}
+\author{Alex Lopez, with Claude (Anthropic)}
+\date{Draft of 12 November 2026}
+
+\begin{document}
+\maketitle
+
+\begin{center}
+\fbox{\parbox{0.93\textwidth}{\textbf{Read this first.} Both problems are open and this paper solves
+neither. It collects what one project proved, checked by computer, or ruled out, and it says for every
+statement which of the three it is. The main theorems are verified in the Lean~4 proof assistant, in eight
+public repositories (table in Section~\ref{sec:table}). \textbf{No part of this work has been reviewed by a
+human mathematician.}}}
+\end{center}
+
+\begin{abstract}
+\noindent Write all the integers in a list, in any order you like, each one exactly once. An arithmetic
+progression is \emph{monotone} in your list if its terms appear from left to right in increasing order, or
+in decreasing order. Two problems of Erd\H{o}s and Graham ask how well a list can avoid monotone progressions.
+\begin{itemize}
+\item \textbf{Problem \#195.} Every list of the integers contains a monotone progression with 3 terms, and
+some list contains none with 5 terms. \emph{Is there a list with no monotone progression of 4 terms?}
+\item \textbf{Problem \#197.} No list of the positive integers avoids monotone 3-term progressions.
+\emph{Can the positive integers be split into two sets, each of which has a list that does?}
+\end{itemize}
+This paper reports partial results from a project in which AI agents (Claude), directed by Alex Lopez,
+searched for constructions and for impossibility proofs, attacked each other's claims, and formalized the
+survivors.
+
+\smallskip
+\textbf{On \#195 we get close from the construction side, and then show that this road ends.} We give lists
+of the integers that avoid monotone 4-term progressions for more and more common differences $d$: every odd
+$d$; every $d$ not divisible by 4; and one list in which, for each power of two, only finitely many monotone
+progressions have a difference divisible by exactly that power. Deleting a set of density zero from the last
+list leaves almost all integers, listed with no monotone 4-term progression at all. But the deleted set
+cannot be put back in the two most natural ways, and computer-checked certificates show that no list built
+on the same block layout works, for wide ranges of its parameters.
+
+\smallskip
+\textbf{On \#197 we rule out the natural candidate splittings, one family at a time:} splittings whose lists
+stay close to increasing order; splittings into long alternating runs (this includes the classical
+``dyadic'' one); splittings with an odd number of equal runs per octave; splittings defined by an irrational
+rotation; and, with a hand proof, random splittings.
+
+\smallskip
+\textbf{One idea runs through all of it.} Inside a finite block of integers there is a perfect way to avoid
+progressions: sort by binary digits read from the right (the \emph{2-adic order}). It is essentially the
+only way, because orders without monotone 3-term progressions are rigid. But a list must reach every integer
+after finitely many steps, so blocks have to be cut by size, and the progressions that straddle a cut are
+where every construction leaks and where every impossibility proof gets its grip.
+
+\smallskip
+\textbf{How much to trust it.} Statements marked \st{Lean} are checked by the Lean kernel. \st{Certified}
+means a finite search problem was refuted by a SAT solver and the proof certificate was checked by a separate
+program. \st{Hand} means a written proof, with the number of adversarial AI referees it survived.
+\st{Evidence} means one program said so. Nothing here bears on whether the answer to \#195 is 3 or 4, and we
+do not know whether the answer to \#197 is yes or no.
+\end{abstract}
+
+\noindent\textbf{How to read this.} Section~\ref{sec:mech} is the common idea, with two complete short
+proofs. Sections~\ref{sec:195c} and~\ref{sec:195o} are \#195 (constructions, then obstructions).
+Section~\ref{sec:197} is \#197. Section~\ref{sec:open} says what failed and what is open.
+Section~\ref{sec:table} is the table of every result with its status and location.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{The two problems}
+
+A \emph{list} (or \emph{enumeration}) of a set $S$ of integers is a sequence $s_0, s_1, s_2, \dots$ in which
+every element of $S$ occurs exactly once. Write $x \bef y$ when $x$ occurs before $y$. The important feature
+is that every element has only finitely many elements before it. ``All the even numbers, then all the odd
+numbers'' is not a list.
+
+A progression $a,\ a+d,\ \dots,\ a+(k-1)d$ with $d \neq 0$ is \emph{monotone} in the list if
+$a \bef a+d \bef \dots \bef a+(k-1)d$, or the reverse. A set is \emph{permutable} if it has a list with no
+monotone 3-term progression.
+
+\paragraph{Problem \#195} (\url{https://www.erdosproblems.com/195}). What is the largest $k$ such that every
+list of $\Z$ contains a monotone $k$-term progression? It is 3 or 4:
+\begin{itemize}
+\item every list of $\Z$ has a monotone 3-term progression (Davis, Entringer, Graham and Simmons
+\cite{DEGS}; proof in Section~\ref{sec:anchor});
+\item some list has no monotone 6-term progression (Geneson \cite{Gen19}), and some list has none with 5
+terms (Adenwalla \cite{Ade}).
+\end{itemize}
+So the question is whether some list of $\Z$ has no monotone 4-term progression (answer 3) or every list has
+one (answer 4). For the positive integers alone the corresponding question was settled in 2026: B.~S.~Ho
+constructed a list of $\N$ with no monotone 4-term progression \cite{Ho}. The whole difficulty of \#195 is
+that $\Z$ has two ends.
+
+\paragraph{Problem \#197} (\url{https://www.erdosproblems.com/197}). Can $\N$ be partitioned into two
+permutable sets? $\N$ itself is not permutable \cite{DEGS}. Three sets are enough
+(Section~\ref{sec:lag197}). W.~Kasel showed in 2026 that the most natural two-set candidate, the dyadic
+partition into blocks $(2^k, 2^{k+1}]$ of alternating colours, fails \cite{Kasel}.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{The common mechanism}\label{sec:mech}
+
+\subsection{The midpoint rule, the anchor rule, and doubling chains}\label{sec:anchor}
+
+\begin{result}{Midpoint rule}{immediate}
+A list has no monotone 3-term progression exactly when, in every progression $x < y < z$ of the set, the
+middle term $y$ is listed before both ends or after both ends.
+\end{result}
+
+\begin{result}{Anchor rule}{immediate}
+Let $a < w$, with $a$ listed before $w$. If $2w - a$ belongs to the set, then $2w - a$ is listed before $w$.
+\end{result}
+
+\begin{proof}
+In the progression $a,\ w,\ 2w-a$ the middle term $w$ is not listed first, so by the midpoint rule it is
+listed last.
+\end{proof}
+
+In words: an early element $a$ drags the mirror image of $a$ through $w$, a number about twice as large as
+$w$, in front of $w$. Everything in this paper about 3-term progressions comes from this rule.
+
+\begin{result}{Theorem (Davis, Entringer, Graham, Simmons)}{published}
+$\N$ is not permutable, and every list of $\Z$ has a monotone 3-term progression.
+\end{result}
+
+\begin{proof}
+Let $a$ be the first element of the list and take any $w > a$. By the anchor rule $w' = 2w - a$ comes before
+$w$. The rule applies again to $w'$, so $w'' = 2w' - a$ comes before $w'$, and so on. This gives infinitely
+many elements before $w$, which a list does not allow.
+\end{proof}
+
+For a set $S$ that is not everything, the chain $w,\ 2w-a,\ 2(2w-a)-a,\ \dots$ can leave $S$, and then the
+argument stops. The general form is:
+
+\begin{result}{Orbit lemma}{attributed to Kasel in our notes}
+Let $F$ be a finite subset of $S$. If $S$ contains an infinite chain $u_0 < u_1 < \cdots$ with
+$u_{k+1} = 2u_k - f_k$ and every $f_k$ in $F$, then $S$ is not permutable.
+\end{result}
+
+\begin{proof}
+Only finitely many elements are listed before some element of $F$. So from some $k$ on, $f_k \bef u_k$, and
+the anchor rule gives $u_{k+1} \bef u_k$: an infinite descent.
+\end{proof}
+
+So \textbf{a permutable set must break every doubling chain}: it needs holes exactly where the chains want
+to go. That is why \#197 asks for two sets. The holes of one set are the other set, and the other set has to
+break its own chains too.
+
+For 4-term progressions the corresponding rule is: if $a$ is listed before a block, $a+3d$ after it, and
+$a+d$, $a+2d$ inside it, then $a+2d$ must come before $a+d$ (otherwise the four terms are in increasing
+order). We call these the \emph{Case-A relations} of the block.
+
+\subsection{The 2-adic order: perfect inside a block}
+
+Write $\nut(n)$ for the number of times 2 divides $n$. The \textbf{2-adic order} puts $x$ before $y$ when the
+binary digit of $x$ at position $\nut(y-x)$ is 0. It lists evens before odds; among the evens, multiples of 4
+first; and so on. On $\{0,\dots,7\}$ it gives
+\[ 0,\ 4,\ 2,\ 6,\ 1,\ 5,\ 3,\ 7 . \]
+
+\begin{result}{Fact}{classical}
+No set ordered 2-adically has a monotone 3-term progression.
+\end{result}
+
+\begin{proof}
+If $\nut(d) = j$, then $x$ and $x+2d$ have the same binary digit at position $j$ and $x+d$ has the other
+one. So the middle term is on the same side of both ends.
+\end{proof}
+
+This is perfect, but it is not a list of an infinite set: infinitely many even numbers would come before the
+first odd one. A list has to chop the integers into finite blocks by size, order each block 2-adically (or
+in some other good way), and then list the blocks one after another.
+
+\subsection{Rigidity: every good order looks 2-adic}\label{sec:rigid}
+
+The 2-adic order is not just one choice among many.
+
+\begin{result}{Zigzag lemma}{Sharma \cite{Sharma}, Prop.~2.2--2.3; Kasel's ``ladder''}
+In an order of an interval of integers with no monotone 3-term progression, one of the two parity classes
+is \emph{early}: each of its elements comes before both of its neighbours.
+\end{result}
+
+\begin{proof}
+The triple $b-1,\ b,\ b+1$ is not monotone, so $b$ is before both neighbours or after both. Two adjacent
+numbers cannot both be ``before both''. So the two types alternate.
+\end{proof}
+
+\begin{result}{Gap lemma}{Sharma \cite{Sharma}, Thm.~2.1--2.2}
+Let $p$ be in the early class and $q$ in the other class. If the mirror image $2p-q$ or $2q-p$ is still in
+the interval, then $p$ comes before $q$.
+\end{result}
+
+So on pairs of opposite parity, every order without monotone 3-term progressions agrees with a 2-adic order
+as far as the interval allows. A similar statement one level down, for residues modulo 4, is our
+\emph{Quarter Lemma} (Section~\ref{sec:rho}). This rigidity is the engine of the finite ``gadgets'' in
+Section~\ref{sec:197} and of Theorem~T0 in Section~\ref{sec:notgive}.
+
+\subsection{Seams}
+
+Put the three subsections together. Inside a block, a good order is forced to be nearly 2-adic. Blocks must
+be cut by size. A progression that starts in one block and ends in another is not protected by either
+block's order: the Case-A relations and the anchor rule say what the order near the cut must do, and those
+demands collide with rigidity. We call a cut inside a residue class a \textbf{seam}.
+
+Every construction below is a way of arranging seams so that fewer progressions cross them. Every
+obstruction below is a proof that some way of arranging seams cannot work.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Problem \#195: constructions}\label{sec:195c}
+
+Each list here is explicit, and each theorem is \st{Lean}. All of them still contain monotone 4-term
+progressions with other differences, so none decides \#195.
+
+\subsection{Odd differences}
+
+\begin{result}{Theorem 1}{Lean}
+There is a list of $\Z$ with no monotone 4-term progression of odd difference.
+\end{result}
+
+\idea{Construction} Call $x \neq 0$ \emph{fast} if it is positive and even, or negative and odd. Give $x$
+the key $|x|/4$ if it is fast and $|x|$ otherwise. List $\Z$ by increasing key, ties by value:
+\[ 0,\,-1,\,2,\,-3,\,1,\,4,\,-5,\,6,\,-7,\,-2,\,8,\,-9,\,10,\,-11,\,3,\,12,\,\dots \]
+The proof is a short case analysis: along a 4-term progression with odd difference the keys can never be
+non-decreasing. Progressions with even difference do occur, for example $2, 4, 6, 8$. This is the analogue
+for $\Z$ of a 2011 theorem of LeSaulnier and Vijay for $\N$ \cite{LV}.
+
+\subsection{Differences not divisible by 4}
+
+\begin{result}{Theorem 2}{Lean}
+There is a list of $\Z$ with no monotone 4-term progression whose difference is not divisible by 4.
+\end{result}
+
+\idea{Idea (``reflection merge'')} List the odd numbers in the order of Theorem~1. Before each odd number
+$y$, insert even numbers so that the set of evens listed before $y$ is always symmetric about $y$. Then no
+triple even, odd, even with the odd number as midpoint is ever in order, which handles odd differences.
+Differences $\equiv 2 \pmod 4$ reduce to Theorem~1 on the odd numbers, and to a copy of Theorem~1 with a
+slowly drifting centre on the even numbers.
+
+\subsection{Every finite 2-adic depth, and all depths at once}
+
+\begin{result}{Theorem G}{Lean; a corollary of Geneson \cite{Gen26}, \S5}
+For every $t \ge 1$ there is a list of $\Z$ with no monotone 4-term progression whose difference is not
+divisible by $2^t$. (One list for each $t$.)
+\end{result}
+
+\begin{result}{Theorem H}{Lean}
+There is a single list of $\Z$ in which, for every $v \ge 0$, only finitely many monotone 4-term
+progressions have $\nut(d) = v$.
+\end{result}
+
+\idea{Construction} Fix the base 3 and moduli $m_s = 2^{t_s}$. Cut $\Z$ into finite \emph{bands}: stage $s$
+holds the integers whose absolute value lies between two consecutive thresholds, which are powers of 3, and
+the exact threshold for $x$ depends on its sign and on its residue modulo a power of two. List 0, and then,
+stage by stage, the negative members of the stage in 2-adic order followed by the positive members in
+reversed 2-adic order. With $t_s = t$ constant this is Geneson's block construction without its truncation,
+and it gives Theorem~G. The new ingredient of Theorem~H is a modulus that grows with the stage,
+$t_s = s+1$.
+
+\idea{Why it works}
+\begin{itemize}
+\item Along a progression with $d = 2^j \cdot (\text{odd})$, the binary digit at position $j$ alternates. So
+two consecutive steps can never both go in the direction that the list prescribes.
+\item Separation lemmas between stages (they need the base to exceed $1+\sqrt2$) show that every step
+\emph{must} go in that direction, with one exception: a \textbf{seam step}, which goes from stage $s$ to
+stage $s+1$ inside one residue class modulo $m_{s+1}$.
+\item So every monotone 4-term progression contains a seam step, which forces $2^{t_{s+1}}$ to divide $d$ and
+bounds its terms. If $t_s$ grows, a fixed $\nut(d)$ allows only finitely many stages.
+\end{itemize}
+Theorems 1 and 2 are the cases $t = 1, 2$ of Theorem~G, with different constructions. We found them before
+noticing that Geneson's paper implies them; he does not state the corollary.
+
+\subsection{A set of density one with no monotone 4-term progression}
+
+\begin{result}{Corollary Z1}{Lean}
+There is a set $S \subseteq \Z$ with $|S \cap [-n,n]|/(2n+1) \to 1$ and a list of $S$ with no monotone
+4-term progression.
+\end{result}
+
+$S$ is $\Z$ minus the \emph{bottom zone} of the Theorem~H list: the elements within a factor $7/3$ of the
+lower end of their band. Every seam step lands in the bottom zone, so deleting it removes every monotone
+progression. The bottom zone has density zero because each zone lies in one residue class of a modulus that
+grows.
+
+Geneson \cite{Gen26} showed that such sets exist with density arbitrarily close to 1 and remarked that his
+construction does not reach density 1. Corollary~Z1 reaches it. As far as our referees found, that is new.
+
+\begin{center}
+\small
+\begin{tabular}{L{2.05in}L{2.25in}L{1.55in}}
+\toprule
+List & No monotone 4-term progression with \dots & Repository \\
+\midrule
+key order (Thm.~1) & $d$ odd & \repo{erdos-195-odd-difference} \\
+reflection merge (Thm.~2) & $4 \nmid d$ & \repo{erdos-195-difference-not-div-4} \\
+bands, fixed modulus (Thm.~G) & $2^t \nmid d$ & \repo{erdos-195-valuation-bands} \\
+bands, growing modulus (Thm.~H) & all but finitely many for each $\nut(d)$ & same \\
+the same list minus a density-zero set (Z1) & any $d$ & same \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Problem \#195: obstructions}\label{sec:195o}
+
+The ladder of Section~\ref{sec:195c} stops one rung short. This section explains why we believe it cannot be
+climbed further by the same method, and what we could and could not prove about any method.
+
+\subsection{Seams always leak, and the deleted set cannot simply be put back}
+
+Every seam carries monotone progressions of the form $0,\ y,\ 2y,\ 3y$ with $y$ just below the cut. Lean
+checks two of them: $0, -6, -12, -18$ in the Theorem~G list with $t=1$, and $0, -44, -88, -132$ in the
+Theorem~H list.
+
+\begin{result}{Proposition Z3}{Lean}
+No list of $\Z$ that keeps the elements of $S$ (from Corollary~Z1) in the same relative order is free of
+monotone 4-term progressions. Nine elements of $S$ decide it: wherever $280$ is inserted, one of
+$(280, 4, -272, -548)$, $(-56, 56, 168, 280)$, $(-40, 280, 600, 920)$ is monotone.
+\end{result}
+
+\begin{result}{Proposition Z3$'$}{Lean}
+The same holds if $S$ is still listed band by band, but the three bands around the first seam are
+re-ordered by \emph{arbitrary} orders of 2-adic type (``binary orders'': an independent choice of which
+digit goes first at every node of the binary tree). One of $280, 284, 288, 292$ always lies on a monotone
+progression.
+\end{result}
+
+These are statements about one instance and its first seam. They do not exclude a repair that re-orders the
+bands in some non-binary way.
+
+\subsection{No list that roughly follows size}
+
+A list of $\Z$ has \textbf{lag ratio $\le \lambda$} if, whenever $y$ is listed before $x$,
+$|y| \le \lambda |x| + C$. An increasing-in-size list has lag ratio 1.
+
+\begin{result}{Theorem L1}{Hand, not refereed}
+Every list of $\Z$ with lag ratio $< 2$ has a monotone 4-term progression.
+\end{result}
+
+\begin{result}{Theorem L2}{Certified}
+Every list of $\Z$ with lag ratio $\le 9/2$ has a monotone 4-term progression. This remains true if only
+pairs of the same sign are controlled, so the relative timing of positives and negatives is free.
+\end{result}
+
+The reduction is exact: for each $\lambda$, a good list with lag ratio $\le \lambda$ exists if and only if
+every window $[-n,n]$ has an order satisfying the lag condition with no monotone progression (K\"onig's
+lemma). The window $[-140,140]$ has none for $\lambda = 9/2$. For comparison, the key order of Theorem~1 has
+lag ratio 3, Adenwalla's 5-term construction has lag ratio below 8, and Ho's list of $\N$ places 8 after
+2623. A solution of \#195 would have to list far elements early, at unbounded ratios.
+
+\subsection{The block layout cannot be completed: window certificates}
+
+Theorems G and H fix a \emph{layout} (which block comes when) and choose the 2-adic order inside blocks.
+Could a cleverer order inside the same blocks remove the remaining progressions? For wide parameter ranges,
+no.
+
+\paragraph{Windows.} Suppose that at some moment a list has listed exactly the integers in $(-A, u)$, and
+that it now lists the whole block $W = [u, w)$ before anything else. Call $W$ a \emph{sign-split window}
+with \textbf{ratio} $w/u$ and \textbf{offset} $w/A$. A 4-term progression is \emph{decided by the window} if
+at least two of its terms are in $W$, at most one was listed before and at most one comes after; whether it
+is monotone then depends only on the order inside $W$. The \textbf{window problem} $\SW(u,w,A)$ asks for an
+order of $W$ in which no such progression is monotone. If $\SW(u,w,A)$ has no solution, no good list passes
+through that state. A rescaling lemma (multiply everything by $M$) transfers this to every larger scale with
+nearly the same ratio and offset.
+
+\begin{result}{Theorem W}{Certified}
+$\SW(1,150,A)$ has no solution for every $A$ from $10$ to $40$. Nor do $\SW(1,200,54)$, $\SW(1,144,12)$,
+$\SW(1,169,13)$, $\SW(1,121,9)$, $\SW(1,130,9)$.
+\end{result}
+
+\begin{result}{Corollary (dead band)}{Certified + Hand; bridge lemmas passed one AI referee per lens}
+A list of $\Z$ with no monotone 4-term progression never lists $(-A,u)$, then all of $[u,w)$, then the
+rest, when $w/u \ge 200$, $w \ge 39800$ and the offset $w/A$ lies in $[3.704,\ 16.55]$. The mirror statement
+holds for negative windows.
+\end{result}
+
+\begin{result}{Corollary (layouts)}{Certified + Hand}
+No choice of orders inside the blocks makes Geneson's layout, or the band layout of Theorem~H, free of
+monotone 4-term progressions when the base $a$ lies in $(1+\sqrt2,\ 28/9)$ or in $(3.75,\ 10.64)$; the later
+certificates extend the second range to $16.55$.
+\end{result}
+
+The first range comes from two-window instances, the second from the dead band. This includes the base 3 of
+Theorem~H and Geneson's own integer bases $4, \dots, 10$. Bases between about $3.11$ and $3.70$, and above
+$16.55$, are not excluded by anything we know.
+
+\paragraph{The negatives are essential.} If only one sign is present, every single window can be solved:
+list the top half in reversed 2-adic order and then the bottom half in 2-adic order \st{Hand, not refereed;
+checked on 345 windows}. The contradiction in Theorem~W needs the negative integers that are listed
+\emph{after} the window. Removing any one of the four families of constraints that involve elements outside
+the window makes $\SW(1,80,16)$ solvable. This matches the known picture: $\N$ has a good list (Ho), and it
+is the second end of $\Z$ that causes trouble.
+
+\subsection{What the certificates do not give}\label{sec:notgive}
+
+\begin{itemize}
+\item \textbf{No readable proof.} Minimal contradictory sub-instances keep 74 of the 79 elements of
+$\SW(1,80,16)$. A hand theorem \st{Hand, no referee round} says every sub-instance on $k$ elements becomes
+solvable once the window is large enough, so no finite pattern explains the obstruction.
+\item \textbf{No monotonicity} \st{Certified}\textbf{.} $\SW(1,81,16)$ has no solution and $\SW(1,82,16)$
+has one. At $w = 78$, $A = 14$ fails, $A = 15$ and $16$ succeed, $A = 17$ fails.
+\item \textbf{Fragility} \st{Evidence}\textbf{.} $\SW(1,77,16)$ becomes solvable when the single
+progression $44, 55, 66, 77$ is ignored. At $(w,A) = (100,16)$, deep inside the dead band, some order has
+only 5 monotone progressions out of 4{,}167.
+\item \textbf{Thin windows are fine} \st{Evidence}\textbf{.} For $A = 2, 3, 4$ the window problem is
+solvable at every size where the solver finished ($w$ up to 120, and $A = 2$ also at $w = 150$). A list could
+try to avoid ever having a thick clean window, by cutting each residue class at a different place. SAT
+solvers cannot test such ``ragged'' layouts at the sizes that matter, and we found no rule that produces
+thin-window solutions at all sizes: every rule with a uniform description broke somewhere between $w = 60$
+and $w = 288$.
+\item \textbf{A toy theorem with a real proof.}
+\end{itemize}
+
+\begin{result}{Theorem T0}{Hand; one AI skeptic did not refute it}
+For $w \ge 15$ and $A \ge 2$, no order of $[1,w)$ \emph{without monotone 3-term progressions} solves
+$\SW(1,w,A)$; the threshold $15$ is exact.
+\end{result}
+
+The proof is five lines from the Gap Lemma: the Case-A relations $2x \bef x$ invert an early element and a
+late one, which rigidity allows at most once, and $[w/3, w/2)$ contains two candidates (a few small sizes
+are handled directly). Its main lemma is Sharma's published theorem, so only the application is ours. It
+does not extend to orders that contain monotone 3-term progressions, which is what solutions actually are.
+
+\subsection{Other routes that are closed}
+
+Each of these was tried as a construction and ended in a proof or a computation that it cannot work.
+\begin{itemize}
+\item Splicing Ho's list of $\N$ with its mirror image, under any merge schedule: a monotone progression
+$-u,\ y,\ 2y+u,\ 3y+2u$ is always forced \st{Hand, not refereed}.
+\item Key orders that are homogeneous (scale-invariant) can never avoid all 4-term progressions
+\st{Hand, not refereed}.
+\item Thompson's prefix certificates \cite{Thompson}: no list of $\Z$ has all long prefixes certified
+\st{Hand, not refereed}.
+\item Magnitude blocks that list residue classes one class at a time, for any modulus; this covers
+Adenwalla's layout \st{Hand + Certified}.
+\item Merging two one-sided lists from a family built by Ho-type recursions (``P1 halves''): all 64 pairs of
+variants fail one stage further \st{Evidence; the family itself is unrefereed}.
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Problem \#197: which splittings fail}\label{sec:197}
+
+Recall that a set is \emph{permutable} if it has a list with no monotone 3-term progression, and the
+question is whether $\N$ is the union of two disjoint permutable sets. By the orbit lemma, each set must
+break all of its own doubling chains.
+
+\subsection{The lists cannot stay close to increasing order}\label{sec:lag197}
+
+A list has \textbf{lag ratio $\le c$} (eventually) if, from some point on, every element $m$ is listed after
+only elements $\le c\,m$.
+
+\begin{result}{Theorem A}{Lean}
+For $c < 2$ there is no partition of $\N$ into two sets with lists that both avoid monotone 3-term
+progressions and both have lag ratio $\le c$.
+\end{result}
+
+\idea{Idea} If $a$ is listed before $z$ and $2z-a$ is in the same class, the anchor rule puts $2z-a$ before
+$z$, and lag ratio below 2 forbids that for large $z$. So $2z-a$ must be in the other class; a parity
+argument then produces a number that fits in neither class.
+
+\paragraph{Three sets are different} \st{Hand, not refereed}. Colour the block
+$[\lceil 1.5^k\rceil, \lceil 1.5^{k+1}\rceil)$ by $k \bmod 3$ and list each colour block by block,
+2-adically inside blocks. The double of a block lands in blocks of other colours, so no one-colour
+progression meets two blocks. These lists have lag ratio about $3/2$. Theorem~A therefore separates two sets
+from three.
+
+\begin{result}{Theorem B}{Certified; the reduction survived three AI referees; not in Lean}
+The same holds for lag ratio $\le 3$.
+\end{result}
+
+\subsection{A finite gadget}
+
+\begin{result}{Theorem I}{Lean}
+For every $M \ge 8$, no order of the interval $[M, 2M+6]$ without monotone 3-term progressions satisfies the
+eight relations ``$2(M+j)-a$ comes before $M+j$'' for $j = 0,1,2,3$ and $a = 0,1$.
+\end{result}
+
+Those eight relations are exactly what the anchor rule forces when 0 and 1 are listed before the interval.
+The proof uses the rigidity of Section~\ref{sec:rigid} in 16 cases ($M \bmod 8$, times the early parity).
+The constant 6 cannot be lowered to 5 for $M = 8$.
+
+\begin{result}{Corollary I}{Lean}
+If $S$ is permutable and contains two consecutive integers $v, v+1$, then $S$ contains only finitely many
+intervals of the form $[P,\ 2P-v+6]$.
+\end{result}
+
+So a permutable set with two adjacent elements cannot contain long intervals that reach just past their own
+double. Kasel's order gadget and its Lean proof by others \cite{tru} give the same statement with 13 in
+place of 6.
+
+\subsection{Long alternating runs}
+
+\begin{result}{Theorem R$^*$ (tower obstruction)}{Lean}
+A set that contains two points $u, u+d$ and an infinite sequence of intervals, each starting well above the
+previous one and each reaching far enough past twice its own start (explicit inequalities in the
+repository), is not permutable.
+\end{result}
+
+\idea{Idea} Theorem~I, rescaled, says that a block of the gadget's shape above a pair $w, w+\delta$ forces
+some element of the block to be listed before the pair. Five overlapping blocks inside one interval produce
+a new pair inside that interval, listed before the old pair. Climbing the tower, the position of the pair in
+the list decreases at every level, which cannot go on forever.
+
+\begin{result}{Corollary R2$^*$}{Lean}
+Let $1 \le r_0 < r_1 < \cdots$ be integers with $r_{k+1}/r_k \to 2$ and colour the run $[r_k, r_{k+1})$ by
+the parity of $k$. Then neither colour class is permutable.
+\end{result}
+
+There is no assumption on the lists and none on how fast the ratios converge. Kasel's dyadic partition is
+the case $r_k = 2^k+1$. The method needs run ratios of at least $7/4$.
+
+\subsection{An odd number of runs per octave}\label{sec:rho}
+
+If each octave $[x, 2x)$ is cut into $2k+1$ runs of alternating colours, doubling a number moves it $2k+1$
+runs ahead, into the \emph{other} colour. That breaks doubling chains, so these ``$\rho$-partitions'' were
+among the main candidates for a positive answer after the dyadic partition died.
+
+\begin{result}{Quarter Lemma}{Lean; a corollary of Sharma \cite{Sharma}}
+In an order of an interval without monotone 3-term progressions, with early parity $\pi$ and \emph{early
+quarter} $Q$ (the residue modulo 4, inside the early parity, whose elements $x$ come before $x+2$), every
+$q \equiv Q \pmod 4$ comes before every $z$ of the late parity, provided both are at least 4 away from the
+ends of the interval.
+\end{result}
+
+\begin{result}{Theorem 7.2}{Lean}
+For $k \ge 1$ and any real phase $\varphi$, colour $n \ge 1$ by the parity of
+$\lfloor (2k+1)(\log_2 n - \varphi) \rfloor$. Neither colour class is permutable.
+\end{result}
+
+\idea{Idea} The double of the bottom of a run lands zero or one above the bottom of the run $2k+1$ later. So
+a small window at the bottom of a run is mirrored, through two fixed adjacent anchors, into the run $2k$
+later, which has the same colour. The anchor rule and the Quarter Lemma then put a point of the next window
+before the current window: an infinite descent again. Colourings whose run boundaries drift away from exact
+powers are not covered.
+
+\subsection{Rotation sets and random sets}
+
+\begin{result}{Theorem K, one frequency}{Lean}
+Let $\alpha$ be irrational, $\beta$ real and $0 \le a < b \le 1$. The set
+$A = \{\, n : \fr(n\alpha+\beta) \in (a,b) \,\}$ is not permutable, and neither is any set containing it.
+\end{result}
+
+These are the Sturmian or ``rotation'' sets: $n$ is in $A$ when the point $n\alpha+\beta$ on the circle
+falls in a fixed arc. They are the standard example of a set that is spread out evenly without being
+periodic.
+
+\begin{proof}
+Write $\theta(n) = \fr(n\alpha+\beta)$. Since $\alpha$ is irrational, the values $\theta(n)$ are dense, so we
+can pick two anchors $f_1, f_2$ in $A$ with $x_1 = \theta(f_1) < x_2 = \theta(f_2)$, and a start $u$ larger
+than both with $\theta(u)$ between $x_1$ and $x_2$. Doubling acts on the circle by
+\[ \theta(2u-f) = 2\theta(u) - \theta(f) \qquad\text{whenever the right side is in } [0,1). \]
+If $\theta(u)$ is in the lower half of $[x_1,x_2]$, reflect in $f_1$: the value $2\theta(u)-x_1$ is again in
+$[x_1,x_2]$. Otherwise reflect in $f_2$. Either way the new point $2u-f$ is larger than $u$ and is in $A$.
+This is an infinite doubling chain in $A$ with two anchors, and the orbit lemma finishes.
+\end{proof}
+
+\begin{result}{Theorem K, general}{Hand; survived three AI referees; not in Lean}
+The same for several rationally independent frequencies and any open window on the torus. In particular
+Beatty-type parity colourings fail.
+\end{result}
+
+\begin{result}{Theorem RS}{Hand; survived three AI referees; not in Lean}
+For every $0 < p < 1$, a random set that contains each $n$ independently with probability $p$ is almost
+surely not permutable.
+\end{result}
+
+The proof finds an interval of anchors and shows that the tree of doubling chains above it dominates a
+branching process that survives with positive probability; this is then upgraded to probability one. The
+case $p = 1/2$ appears as an unproved claim in Kasel's notes. So both standard models of a ``diffuse'' set,
+random and quasi-periodic, are out.
+
+\subsection{What a positive answer would have to look like}
+
+Putting the theorems together, a two-set solution would need all of the following.
+\begin{itemize}
+\item At least one list that runs ahead by a factor of more than 3, infinitely often: infinitely many $m$
+are listed after some element larger than $3m$ (Theorems A, B).
+\item No class with two adjacent elements and infinitely many intervals $[P, 2P-v+6]$ (Corollary~I), no
+towers (R$^*$), not an exact $\rho$-partition (7.2).
+\item Not random, not a rotation set (RS, K).
+\item \st{Hand, not refereed} Across \emph{every} large cut $X$, some pair $y < X \le z < 2y$ of the same
+class with $z$ listed before $y$. Also, no schedule that lists $\N$ block by block (finishing $[1,X)$ before
+going on, for infinitely many $X$) works, whatever the blocks and the orders inside them.
+\end{itemize}
+Colourings that survive every tool we have are known: log-periodic colourings with eight arcs per period,
+and some run patterns with drifting boundaries. What is missing, for a negative answer, is a version of
+Theorem~I that tolerates a few missing points in the interval. Diffuse colourings never contain the complete
+intervals that all our rigid gadgets need.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{What failed, and where the problems stand}\label{sec:open}
+
+\paragraph{\#195.} The construction side has a list that is correct on a set of density one and provably
+cannot be repaired in the obvious ways. The obstruction side has a certified dead band for clean block
+layouts and a lag bound of $9/2$, with no readable proof and no monotone structure to extrapolate from. The
+two sides do not meet: a solution could still exist with ragged cuts and thin windows, which nobody can
+test, and an impossibility proof would need a mechanism that works for lists with unbounded lag, which
+nobody has. Our last round of work produced eleven further ideas; seven were tested and none survived. We do
+not have evidence for either answer.
+
+One formulation has not been explored: with 0 listed first, a good list of $\Z$ is two good one-sided lists
+(the positives, the negatives) together with a way of merging them, and a rule in our notes
+\st{Hand, not refereed} says the merge is forced for most pairs $p, -q$. Building the two halves jointly
+under that rule was never tried.
+
+\paragraph{\#197.} Every explicit family we could describe fails, and the failures have a common shape: a
+doubling chain that the colouring does not break. The surviving candidates are exactly those in which
+chains are broken by log-scale phases and the classes contain no complete near-doubling intervals. We
+estimate nothing about which answer is right.
+
+\paragraph{Things that went wrong along the way.}
+\begin{itemize}
+\item Three times an agent ``discovered'' a lemma that was already published (Sharma's theorem twice, and
+the corollary of Geneson's \S5). The credits above reflect this.
+\item A claim that four pairs of one-sided lists could be merged was an artefact of a checker that ignored
+elements not yet placed. With that fixed, all pairs fail.
+\item Our own certificate checker accepted a fake proof when a file header overstated the number of clauses.
+No certificate in this paper triggers the flaw, and the newest ones were re-checked with the patched
+checker.
+\item Two corollaries of the tower theorem were false in degenerate cases with empty intervals; the AI
+referees caught this and each received one more hypothesis before formalization.
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newpage
+\section{Table of results}\label{sec:table}
+
+{\small\renewcommand{\arraystretch}{1.25}
+\begin{longtable}{L{2.3in}cL{1.55in}L{1.45in}}
+\toprule
+Result & Problem & Status & Where \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+Thm.~1: no monotone 4-AP with odd $d$ & 195 & Lean & \repo{erdos-195-odd-difference} \\
+Thm.~2: none with $4 \nmid d$ & 195 & Lean & \repo{erdos-195-difference-not-div-4} \\
+Thm.~G: none with $2^t \nmid d$ (corollary of Geneson) & 195 & Lean & \repo{erdos-195-valuation-bands} \\
+Thm.~H: finitely many for each $\nut(d)$ & 195 & Lean & same \\
+Cor.~Z1: density-one set with a 4-AP-free list & 195 & Lean & same \\
+Prop.~Z3, Z3$'$: the deleted zone cannot be re-inserted & 195 & Lean & same \\
+Thm.~L1: lag ratio $< 2$ impossible & 195 & Hand, not refereed & working notes \\
+Thm.~L2: lag ratio $\le 9/2$ impossible & 195 & Certified, two encoders & working notes \\
+Thm.~W and the dead band $[3.704, 16.55]$ & 195 & Certified, two encoders; bridge lemmas one AI referee per
+lens & working notes \\
+Layouts dead for $a$ in $(1+\sqrt2, 28/9)$ & 195 & Certified, two encoders & working notes \\
+One-sided windows always solvable & 195 & Hand, not refereed & working notes \\
+Thm.~T0 (toy case; corollary of Sharma) & 195 & Hand, one AI skeptic & working notes \\
+\midrule
+Thm.~A: lag ratio $< 2$ impossible & 197 & Lean & \repo{erdos-197-bounded-lag} \\
+Thm.~B: lag ratio $\le 3$ impossible & 197 & Certified; three AI referees & working notes \\
+Thm.~I, Cor.~I: the gadget $[M, 2M+6]$ & 197 & Lean & \repo{erdos-197-interval-gadget} \\
+Thm.~R$^*$, Cor.~R2$^*$: towers; runs with ratio $\to 2$ & 197 & Lean & \repo{erdos-197-tower-obstruction} \\
+Quarter Lemma; Thm.~7.2: exact $\rho$-partitions & 197 & Lean & \repo{erdos-197-rho-partition} \\
+Thm.~K, one frequency: rotation sets & 197 & Lean & \repo{erdos-197-kronecker} \\
+Thm.~K, several frequencies; Thm.~RS: random sets & 197 & Hand, three AI referees & working notes \\
+Crossing pairs at every cut; no complete prefixes & 197 & Hand, not refereed & working notes \\
+\end{longtable}
+}
+
+\noindent All repositories are under \url{https://github.com/Alex-lop}. ``Working notes'' are files of the
+project that are not public. Statements that live only there should be treated as claims until someone else
+checks them.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{How this was produced, and what ``verified'' means here}
+
+The work was done between 1 and 11 November 2026 by Claude models (Opus~5.5, Fable~5.1, Fable~5.2,
+Sonnet~5.5) running as agents in Claude Code, directed by Alex Lopez. Agents proposed constructions and
+obstructions; other agents, given no stake in the result and told to refute it, acted as referees with three
+lenses (the proof, the computation, the scope and novelty); survivors were formalized in Lean by further
+agents and audited.
+\begin{itemize}
+\item \textbf{Lean.} Each repository states its theorems in a file that imports only Mathlib, proves the
+same statements elsewhere, and checks that both elaborate to identical terms. The proofs use only the three
+standard axioms and no \texttt{native\_decide}. The ``no monotone progression'' predicate is matched against
+the one in Google DeepMind's formal-conjectures \cite{fc} by separate fidelity files. The kernel guarantees
+the formal statement. That the formal statement says what the prose says was checked by AI audits and by
+non-vacuity files, not by a human.
+\item \textbf{Certified.} A finite instance was written as a SAT formula by two independently written
+encoders, refuted by a SAT solver, and the LRAT proof was checked by a separate checker. The step from the
+finite instance to a statement about all lists is a short hand argument in each case; its review status is
+given next to each result.
+\item \textbf{AI referees.} They catch real errors (Section~\ref{sec:open}), but they are the same kind of
+model as the authors and can share blind spots. Surviving them is weaker than human review.
+\item \textbf{Novelty.} Claims that something is new mean only that our literature searches found nothing.
+Several 2026 papers on these problems appeared while the project ran.
+\end{itemize}
+
+\begin{thebibliography}{99}\small
+\bibitem{DEGS} J.~A. Davis, R.~C. Entringer, R.~L. Graham, G.~J. Simmons, \emph{On permutations containing
+no long arithmetic progressions}, Acta Arith. 34 (1977), 81--90.
+\bibitem{Sharma} A. Sharma, \emph{Enumerating permutations that avoid three term arithmetic progressions},
+Electron. J. Combin. 16 (2009), \#R63.
+\bibitem{LV} T.~D. LeSaulnier, S. Vijay, 2011 (permutations of $\N$ and $\Z$ avoiding monotone progressions;
+the odd-difference result for $\N$).
+\bibitem{Gen19} J. Geneson, Discrete Math. 342 (2019), 1489--1491, arXiv:1803.06334.
+\bibitem{Ade} S. Adenwalla, arXiv:2211.04451 (2022).
+\bibitem{Gen26} J. Geneson, arXiv:2608.12604 (2026): block constructions, densities of 4-permutable subsets
+of $\Z$.
+\bibitem{Kasel} W. Kasel, \emph{Structural rigidity in the Erd\H{o}s--Graham two-set permutation problem},
+arXiv:2609.02939 (2026).
+\bibitem{Ho} B.~S. Ho, arXiv:2609.12780 (2026): a list of $\N$ with no monotone 4-term progression.
+\bibitem{Thompson} Thompson, arXiv:2609.13350 (2026): binary orders and prefix certificates.
+\bibitem{tru} the-omega-institute/trureturing, pull request \#9626: Lean proof that Kasel's order gadget is
+infeasible for $M \ge 16$.
+\bibitem{fc} google-deepmind/formal-conjectures: the formal statements of Erd\H{o}s \#195 and \#197.
+\end{thebibliography}
+
+\end{document}
