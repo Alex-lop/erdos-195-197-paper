@@ -199,7 +199,7 @@ Theorems G and H fix a *layout* (which block comes when) and choose the 2-adic o
 - **No monotonicity [Certified].** SW(1, 81, 16) has no solution and SW(1, 82, 16) has one. At w = 78, A = 14 fails, A = 15 and 16 succeed, A = 17 fails.
 - **Fragility [Evidence].** SW(1, 77, 16) becomes solvable when the single progression 44, 55, 66, 77 is ignored. At (w, A) = (100, 16), deep inside the dead band, some order has only 5 monotone progressions out of 4,167.
 - **Thin windows are fine [Evidence].** For A = 2, 3, 4 the window problem is solvable at every size where the solver finished (w up to 120, and A = 2 also at w = 150). A list could try to avoid ever having a thick clean window, by cutting each residue class at a different place. SAT solvers cannot test such "ragged" layouts at the sizes that matter, and we found no rule that produces thin-window solutions at all sizes: every rule with a uniform description broke somewhere between w = 60 and w = 288.
-- **A toy theorem with a real proof.** **Theorem T0 [Hand; one AI skeptic did not refute it].** For w ≥ 15 and A ≥ 2, no order of [1, w) *without monotone 3-term progressions* solves SW(1, w, A); the threshold 15 is exact. The proof is five lines from the Gap Lemma: the Case-A relations 2x ≺ x invert an early element and a late one, which rigidity allows at most once, and [w/3, w/2) contains two candidates (a few small sizes are handled directly). Its main lemma is Sharma's published theorem, so only the application is ours. It does not extend to orders that contain monotone 3-term progressions, which is what solutions actually are.
+- **A toy theorem with a real proof.** **Theorem T0 [Lean (Addendum 2); not yet audited].** For w ≥ 15 and A ≥ 2, no order of [1, w) *without monotone 3-term progressions* solves SW(1, w, A); the threshold 15 is exact. The proof is five lines from the Gap Lemma: the Case-A relations 2x ≺ x invert an early element and a late one, which rigidity allows at most once, and [w/3, w/2) contains two candidates (a few small sizes are handled directly). Its main lemma is Sharma's published theorem, so only the application is ours. It does not extend to orders that contain monotone 3-term progressions, which is what solutions actually are.
 
 ### 4.5 Other routes that are closed
 
@@ -315,7 +315,7 @@ One formulation has not been explored: with 0 listed first, a good list of ℤ i
 | Thm W and the dead band [3.704, 16.55] | 195 | Certified, two encoders; bridge lemmas one AI referee per lens | working notes |
 | Layouts dead for a in (1 + √2, 28/9) | 195 | Certified, two encoders | working notes |
 | One-sided windows always solvable | 195 | Hand, not refereed | working notes |
-| Thm T0 (toy case; corollary of Sharma) | 195 | Hand, one AI skeptic | working notes |
+| Thm T0 (toy case; corollary of Sharma) | 195 | Lean, not audited | [erdos-195-window-t0](https://github.com/Alex-lop/erdos-195-window-t0) |
 | Thm A: lag ratio < 2 impossible | 197 | Lean | [erdos-197-bounded-lag](https://github.com/Alex-lop/erdos-197-bounded-lag) |
 | Thm B: lag ratio ≤ 3 impossible | 197 | Certified; three AI referees | working notes |
 | Thm I, Cor I: the gadget [M, 2M + 6] | 197 | Lean | [erdos-197-interval-gadget](https://github.com/Alex-lop/erdos-197-interval-gadget) |
@@ -324,6 +324,9 @@ One formulation has not been explored: with 0 listed first, a good list of ℤ i
 | Thm K, one frequency: rotation sets | 197 | Lean | [erdos-197-kronecker](https://github.com/Alex-lop/erdos-197-kronecker) |
 | Thm K, several frequencies; Thm RS: random sets | 197 | Hand, three AI referees | working notes |
 | Crossing pairs at every cut (M-cut); no common complete prefixes (CP) | 197 | Lean | [erdos-197-pull-theorem](https://github.com/Alex-lop/erdos-197-pull-theorem) |
+| Gadget P, Cor P: intervals of ratio 3/2 | 197 | Lean, not audited | [erdos-197-gadget-p](https://github.com/Alex-lop/erdos-197-gadget-p) |
+| Log-density ≤ 1/2 (interval ratio > √3); run colourings; Thm D2 | 197 | Lean, not audited | same |
+| Gadget Q4 | 197 | Certified for c ≤ 600; no proof | working notes |
 
 "Working notes" are files of the project that are not public. Statements that live only there should be treated as claims until someone else checks them.
 
@@ -335,6 +338,18 @@ Two results listed above as hand proofs are now **[Lean]**, each in a private re
 - **The pull theorem** (§5.6): Corollary M-cut and Theorem CP, [erdos-197-pull-theorem](https://github.com/Alex-lop/erdos-197-pull-theorem). The statement proved is: no partition of ℕ into two permutable sets has lists that both finish [0, X) before listing anything ≥ X, for infinitely many common X. It allows unbounded lag, so Theorems A and B do not cover it, and it is incomparable with them. Lists that finish at different cuts are *not* covered; the earlier wording of §5.6 claimed too much. Precursor: Kasel's notes posed the two-seam version ("double non-procrastination") and checked it by SAT for M ≤ 80.
 
 Both went through three adversarial AI referees (proof, computation, scope) and an independent AI audit of the Lean project on 16 November 2026. No human has reviewed them. Other results of that night (unrefereed or checked by one program only) are in the journal repository `Alex-lop/erdos-mission6-log`, not here.
+
+## Addendum 2, 16 November 2026 (mission 6, later results)
+
+These were found and formalized later the same night. All are **[Lean]**, in private repositories, but unlike Addendum 1 they have *not* had referee rounds on the Lean statements or an independent audit: only the formalizer compared the formal statements with the hand proofs. No human has reviewed them.
+
+- **Gadget P and Corollary P** (#197), [erdos-197-gadget-p](https://github.com/Alex-lop/erdos-197-gadget-p). Write y\*(e) = 2e − 1 for even e and y\*(e) = 2e for odd e. For every c ≥ 8, no order of {c, c + 1} ∪ [2c − 1, 3c + 20] without monotone 3-term progressions lists y\*(c) before c and y\*(c + 1) before c + 1. Hence if S is permutable and a, a + 1 ∈ S, only finitely many c′ have c′, c′ + 1 ∈ S and [2c′ − a − 1, 3c′ − 2a + 20] ⊆ S. Corollary I needs intervals of ratio 2; this needs ratio 3/2. Found by SAT in a Fable 5.2 deep run; the hand proof (later runs, from Sharma's zigzag and gap lemmas) survived one adversarial AI skeptic.
+- **A log-density bound** (#197), same repository. A permutable union of intervals ⋃ [P<sub>i</sub>, Q<sub>i</sub>], each of ratio at least r for a fixed r with r² > 3, has upper logarithmic density at most 1/2. This is sharp in that class (Geneson's set with the first interval of each block removed). Whether *every* permutable set has upper log-density at most 1/2 is open. The eight-arc colourings of §5.6 are not covered (their arcs have ratio at most 1.26), and one of their two classes has log-density 0.571, so a general bound would kill them.
+- **Run colourings** (#197), same repository. If ℕ is cut into runs coloured alternately and every run has ratio at least ρ > √3, the two classes are not both permutable.
+- **Theorem D2, the tree-chain obstruction** (#197), same repository, with an example: ⋃<sub>j≥1</sub> [3<sup>j</sup> + ⌊3<sup>j</sup>/10⌋, 2·3<sup>j</sup>] is not permutable.
+- **Theorem T0** (#195, §4.4), [erdos-195-window-t0](https://github.com/Alex-lop/erdos-195-window-t0): now in Lean.
+
+**Checked by computer only.** *Gadget Q4*: if 2x − 1 and 2x − 2 precede x for every x ∈ [c, c + 4], then [c, c + 4] ∪ [⌊3c/2⌋ − 2, 2c + 8] has no order without monotone 3-term progressions. LRAT-verified for every c = 20, …, 600, with a second encoder agreeing on part of that range; there is no proof. The repository above proves in Lean that Q4, if true, extends the log-density bound to interval ratios above 3/2.
 
 ## 8. How this was produced, and what "verified" means here
 
