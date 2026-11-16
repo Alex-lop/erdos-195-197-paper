@@ -735,6 +735,31 @@ $[c,c+4]\cup[\lfloor 3c/2\rfloor-2,\ 2c+8]$ has no order without monotone 3-term
 $c=20,\dots,600$, with a second encoder agreeing on part of that range; there is no proof. The repository above proves in
 Lean that Q4, if true, extends the log-density bound to interval ratios above $3/2$.
 
+\section{Addendum 3, 16 November 2026 (mission 7)}
+New results of mission 7, in the private repository \repo{erdos-197-gadget-p}. The Lean statements were re-checked by the
+orchestrator (build, axioms, Challenge/Solution identity, fidelity) but have \emph{not} had an independent audit; the hand
+proofs each survived a proof skeptic and a computation skeptic (AI). No human has reviewed them.
+\begin{itemize}
+\item \textbf{Gadget F and log-density above $3/2$} (\#197), \textbf{[Lean]}. For $c\ge 40$, if $2x-1$ and $2x-2$ precede $x$
+for every $x\in[c,c+3]$, then $[c,c+3]\cup[\lfloor 3c/2\rfloor-13,\ 2c+20]$ has no order without monotone 3-term
+progressions. Consequence: a permutable union of intervals, each of ratio at least $r$ for a fixed $r>3/2$, has upper
+logarithmic density at most $1/2$ (Addendum~2 needed $r>\sqrt3$). This replaces the computer-only gadget Q4 of
+Addendum~2, which mission 7 also proved with computer assistance ($c\ge 512$).
+\item \textbf{Gadget P with a hole} (\#197), \textbf{[Lean]}. If $A<B$, $2B+2c+154\le 3A$ and $3B+434\le 3c+2A$, then no order
+of $\{c,c+1\}\cup[2c-1,A]\cup[B,3c+40]$ without monotone 3-term progressions lists $y^*(c)$ before $c$ and $y^*(c+1)$
+before $c+1$; the permutable-set form follows as for Corollary P. Gadget P survives a hole narrower than half of each
+remaining piece.
+\item \textbf{The eight-arc survivor of \S5.6 has a non-permutable class} (\#197), \textbf{hand proof, not in Lean}. For the
+log-periodic colouring $\theta$ with $\log_2$ arc lengths $(\tfrac{2502}{7603},\tfrac{949}{3573},\tfrac{254}{9897},
+\tfrac{3283}{9867},\tfrac{428}{3665},\tfrac{1763}{7719},\tfrac{1735}{9617},\tfrac{394}{9865})$, class 1 is not permutable at
+every phase, so $\theta$ is not a two-set answer. Class 1's arcs 1 and 3 are separated only by a sliver of class 0 (ratio
+$1.018$), and the hole theorem bridges it; the only numeric inputs are five strict inequalities on the arc lengths,
+certified by interval arithmetic. The same holds on an open neighbourhood of $\theta$, but \emph{not} on $\theta$'s whole
+combinatorial type, and class 0 is untouched. A numerical scan (one program) finds such kills somewhere in 3{,}410 of the
+3{,}904 realisable eight-arc survivor types (period above 1) and nowhere in 494; no sampled pattern with period between $1/2$ and $1$
+is killed. So explicit candidates for a positive answer remain, and \#197 is still open.
+\end{itemize}
+
 \section{How this was produced, and what ``verified'' means here}
 
 The work was done between 1 and 11 November 2026 by Claude models (Opus~5.5, Fable~5.1, Fable~5.2,
