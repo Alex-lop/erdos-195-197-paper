@@ -173,7 +173,7 @@ These are statements about one instance and its first seam. They do not exclude 
 
 A list of ℤ has **lag ratio ≤ λ** if, whenever y is listed before x, |y| ≤ λ|x| + C. An increasing-in-size list has lag ratio 1.
 
-**Theorem L1 [Hand, not refereed].** Every list of ℤ with lag ratio < 2 has a monotone 4-term progression.
+**Theorem L1 [Lean; addendum of 16 Nov. 2026].** Every list of ℤ, and every list of ℕ, with lag ratio < 2 has a monotone 4-term progression. It is an elementary observation (six elements 0, 2M, 3M, 4M, 6M, 9M suffice); for ℤ it is implied by Theorem L2, so its new content is the ℕ case.
 
 **Theorem L2 [Certified].** Every list of ℤ with lag ratio ≤ 9/2 has a monotone 4-term progression. This remains true if only pairs of the same sign are controlled, so the relative timing of positives and negatives is free.
 
@@ -280,7 +280,7 @@ Putting the theorems together, a two-set solution would need all of the followin
 - At least one list that runs ahead by a factor of more than 3, infinitely often: infinitely many m are listed after some element larger than 3m (Theorems A, B).
 - No class with two adjacent elements and infinitely many intervals [P, 2P − v + 6] (Corollary I), no towers (R\*), not an exact ρ-partition (7.2).
 - Not random, not a rotation set (RS, K).
-- **[Hand, not refereed]** Across *every* large cut X, some pair y < X ≤ z < 2y of the same class with z listed before y, Also, no schedule that lists ℕ block by block (finishing [1, X) before going on, for infinitely many X) works, whatever the blocks and the orders inside them.
+- **[Lean; addendum of 16 Nov. 2026]** Across *every* large cut X, some pair y < X ≤ z < 2y of the same class with z listed before y. Also, no two-set solution has both lists finish [1, X) at the same X, for infinitely many X (lists that finish at different cuts are not covered), so no schedule that lists ℕ block by block (finishing [1, X) before going on, for infinitely many X) works, whatever the blocks and the orders inside them.
 
 Colourings that survive every tool we have are known: log-periodic colourings with eight arcs per period, and some run patterns with drifting boundaries. What is missing, for a negative answer, is a version of Theorem I that tolerates a few missing points in the interval. Diffuse colourings never contain the complete intervals that all our rigid gadgets need.
 
@@ -310,7 +310,7 @@ One formulation has not been explored: with 0 listed first, a good list of ℤ i
 | Thm H: finitely many for each ν<sub>2</sub>(d) | 195 | Lean | same |
 | Cor Z1: density-one set with a 4-AP-free list | 195 | Lean | same |
 | Prop Z3, Z3′: the deleted zone cannot be re-inserted | 195 | Lean | same |
-| Thm L1: lag ratio < 2 impossible | 195 | Hand, not refereed | working notes |
+| Thm L1: lag ratio < 2 impossible (ℤ and ℕ) | 195 | Lean | [erdos-195-lag-below-2](https://github.com/Alex-lop/erdos-195-lag-below-2) |
 | Thm L2: lag ratio ≤ 9/2 impossible | 195 | Certified, two encoders | working notes |
 | Thm W and the dead band [3.704, 16.55] | 195 | Certified, two encoders; bridge lemmas one AI referee per lens | working notes |
 | Layouts dead for a in (1 + √2, 28/9) | 195 | Certified, two encoders | working notes |
@@ -323,9 +323,18 @@ One formulation has not been explored: with 0 listed first, a good list of ℤ i
 | Quarter Lemma; Thm 7.2: exact ρ-partitions | 197 | Lean | [erdos-197-rho-partition](https://github.com/Alex-lop/erdos-197-rho-partition) |
 | Thm K, one frequency: rotation sets | 197 | Lean | [erdos-197-kronecker](https://github.com/Alex-lop/erdos-197-kronecker) |
 | Thm K, several frequencies; Thm RS: random sets | 197 | Hand, three AI referees | working notes |
-| Crossing pairs at every cut; no complete prefixes | 197 | Hand, not refereed | working notes |
+| Crossing pairs at every cut (M-cut); no common complete prefixes (CP) | 197 | Lean | [erdos-197-pull-theorem](https://github.com/Alex-lop/erdos-197-pull-theorem) |
 
 "Working notes" are files of the project that are not public. Statements that live only there should be treated as claims until someone else checks them.
+
+## Addendum, 16 November 2026 (mission 6)
+
+Two results listed above as hand proofs are now **[Lean]**, each in a private repository (Alex makes them public):
+
+- **Theorem L1** (§4.2), for lists of ℤ and of ℕ = {0, 1, 2, …}: [erdos-195-lag-below-2](https://github.com/Alex-lop/erdos-195-lag-below-2). With M large, 0 precedes 2M and 3M, every v precedes 2v (this is where λ < 2 is used), so the progressions (0, 2M, 4M, 6M) and (0, 3M, 6M, 9M) force 9M before 6M before 4M, which the lag bound forbids. For λ < 3/2 the statement is trivial, and for ℤ it is implied by the certified Theorem L2; the ℕ case is its new content. The closest earlier text we found is Geneson (arXiv:2608.12604, eq. 5.7), who uses the same "ratio 2" fact for a construction.
+- **The pull theorem** (§5.6): Corollary M-cut and Theorem CP, [erdos-197-pull-theorem](https://github.com/Alex-lop/erdos-197-pull-theorem). The statement proved is: no partition of ℕ into two permutable sets has lists that both finish [0, X) before listing anything ≥ X, for infinitely many common X. It allows unbounded lag, so Theorems A and B do not cover it, and it is incomparable with them. Lists that finish at different cuts are *not* covered; the earlier wording of §5.6 claimed too much. Precursor: Kasel's notes posed the two-seam version ("double non-procrastination") and checked it by SAT for M ≤ 80.
+
+Both went through three adversarial AI referees (proof, computation, scope) and an independent AI audit of the Lean project on 16 November 2026. No human has reviewed them. Other results of that night (unrefereed or checked by one program only) are in the journal repository `Alex-lop/erdos-mission6-log`, not here.
 
 ## 8. How this was produced, and what "verified" means here
 

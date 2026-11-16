@@ -356,8 +356,9 @@ bands in some non-binary way.
 A list of $\Z$ has \textbf{lag ratio $\le \lambda$} if, whenever $y$ is listed before $x$,
 $|y| \le \lambda |x| + C$. An increasing-in-size list has lag ratio 1.
 
-\begin{result}{Theorem L1}{Hand, not refereed}
-Every list of $\Z$ with lag ratio $< 2$ has a monotone 4-term progression.
+\begin{result}{Theorem L1}{Lean; addendum of 16 Nov.\ 2026}
+Every list of $\Z$, and every list of $\N$, with lag ratio $< 2$ has a monotone 4-term progression. It is an
+elementary observation; for $\Z$ it is implied by Theorem L2, so its new content is the $\N$ case.
 \end{result}
 
 \begin{result}{Theorem L2}{Certified}
@@ -601,8 +602,9 @@ are listed after some element larger than $3m$ (Theorems A, B).
 \item No class with two adjacent elements and infinitely many intervals $[P, 2P-v+6]$ (Corollary~I), no
 towers (R$^*$), not an exact $\rho$-partition (7.2).
 \item Not random, not a rotation set (RS, K).
-\item \st{Hand, not refereed} Across \emph{every} large cut $X$, some pair $y < X \le z < 2y$ of the same
-class with $z$ listed before $y$. Also, no schedule that lists $\N$ block by block (finishing $[1,X)$ before
+\item \st{Lean; addendum of 16 Nov.\ 2026} Across \emph{every} large cut $X$, some pair $y < X \le z < 2y$ of the same
+class with $z$ listed before $y$. Also, no two-set solution has both lists finish $[1,X)$ at the same $X$ for
+infinitely many $X$ (lists that finish at different cuts are not covered), so no schedule that lists $\N$ block by block (finishing $[1,X)$ before
 going on, for infinitely many $X$) works, whatever the blocks and the orders inside them.
 \end{itemize}
 Colourings that survive every tool we have are known: log-periodic colourings with eight arcs per period,
@@ -662,7 +664,7 @@ Thm.~G: none with $2^t \nmid d$ (corollary of Geneson) & 195 & Lean & \repo{erdo
 Thm.~H: finitely many for each $\nut(d)$ & 195 & Lean & same \\
 Cor.~Z1: density-one set with a 4-AP-free list & 195 & Lean & same \\
 Prop.~Z3, Z3$'$: the deleted zone cannot be re-inserted & 195 & Lean & same \\
-Thm.~L1: lag ratio $< 2$ impossible & 195 & Hand, not refereed & working notes \\
+Thm.~L1: lag ratio $< 2$ impossible ($\Z$ and $\N$) & 195 & Lean & \repo{erdos-195-lag-below-2} \\
 Thm.~L2: lag ratio $\le 9/2$ impossible & 195 & Certified, two encoders & working notes \\
 Thm.~W and the dead band $[3.704, 16.55]$ & 195 & Certified, two encoders; bridge lemmas one AI referee per
 lens & working notes \\
@@ -677,13 +679,30 @@ Thm.~R$^*$, Cor.~R2$^*$: towers; runs with ratio $\to 2$ & 197 & Lean & \repo{er
 Quarter Lemma; Thm.~7.2: exact $\rho$-partitions & 197 & Lean & \repo{erdos-197-rho-partition} \\
 Thm.~K, one frequency: rotation sets & 197 & Lean & \repo{erdos-197-kronecker} \\
 Thm.~K, several frequencies; Thm.~RS: random sets & 197 & Hand, three AI referees & working notes \\
-Crossing pairs at every cut; no complete prefixes & 197 & Hand, not refereed & working notes \\
+M-cut; no common complete prefixes (CP) & 197 & Lean & \repo{erdos-197-pull-theorem} \\
 \end{longtable}
 }
 
 \noindent All repositories are under \url{https://github.com/Alex-lop}. ``Working notes'' are files of the
 project that are not public. Statements that live only there should be treated as claims until someone else
 checks them.
+
+\section{Addendum, 16 November 2026 (mission 6)}
+Two results listed above as hand proofs are now \textbf{[Lean]}, each in a private repository.
+\begin{itemize}
+\item \textbf{Theorem L1} (\S4.2), for lists of $\Z$ and of $\N=\{0,1,2,\dots\}$: \repo{erdos-195-lag-below-2}. With $M$
+large, $0$ precedes $2M$ and $3M$, every $v$ precedes $2v$ (this is where $\lambda<2$ is used), so $(0,2M,4M,6M)$ and
+$(0,3M,6M,9M)$ force $9M$ before $6M$ before $4M$, which the lag bound forbids. For $\lambda<3/2$ the statement is
+trivial, and for $\Z$ it is implied by the certified Theorem L2; the $\N$ case is its new content. The closest earlier
+text we found is Geneson (arXiv:2608.12604, eq.~5.7), who uses the same ``ratio 2'' fact for a construction.
+\item \textbf{The pull theorem} (\S5.6): Corollary M-cut and Theorem CP, \repo{erdos-197-pull-theorem}. No partition
+of $\N$ into two permutable sets has lists that both finish $[0,X)$ before listing anything $\ge X$, for infinitely
+many common $X$. It allows unbounded lag, so Theorems A and B do not cover it. Lists that finish at different cuts
+are \emph{not} covered; the earlier wording of \S5.6 claimed too much. Precursor: Kasel's notes posed the two-seam
+version (``double non-procrastination'') and checked it by SAT for $M\le 80$.
+\end{itemize}
+Both went through three adversarial AI referees (proof, computation, scope) and an independent AI audit of the Lean
+project on 16 November 2026. No human has reviewed them.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{How this was produced, and what ``verified'' means here}
